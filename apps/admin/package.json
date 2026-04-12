@@ -13,6 +13,7 @@
     "@orgbridge/config": "workspace:*",
     "@orgbridge/db": "workspace:*",
     "@orgbridge/ui": "workspace:*",
+    "drizzle-orm": "^0.45.2",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^2.4.3",
     "next": "^15.1.0",
