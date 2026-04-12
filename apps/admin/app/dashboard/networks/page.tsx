@@ -43,7 +43,7 @@ export default function NetworksPage() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
   const [toggling, setToggling] = useState<string | null>(null)
-  const searchTimeout = useRef<ReturnType<typeof setTimeout>>()
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const load = useCallback(async (search: string, p: number, append = false) => {
     setLoading(true)
