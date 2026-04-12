@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────── */
+:root {
+  --ob-navy:        #0D1929;
+  --ob-navy-mid:    #142338;
+  --ob-navy-light:  #1E3352;
+  --ob-amber:       #E9A010;
+  --ob-amber-dim:   #C47F08;
+  --ob-amber-glow:  rgba(233, 160, 16, 0.18);
+  --ob-surface:     #FFFFFF;
+  --ob-surface-alt: #F9F8F5;
+  --ob-text:        #1A1F2E;
+  --ob-text-muted:  #6B7382;
+  --ob-text-faint:  #9CA3AF;
+  --ob-border:      #E5E2DC;
+  --ob-error:       #DC2626;
+  --ob-error-bg:    #FEF2F2;
+  --ob-error-border:#FCA5A5;
+  --ob-success:     #059669;
+  --ob-success-bg:  #ECFDF5;
+  --ob-success-border:#6EE7B7;
+}
+
+/* ─── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--ob-surface);
+  color: var(--ob-text);
+  font-family: var(--font-dm-sans, 'DM Sans', system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sora, 'Sora', system-ui, sans-serif);
+}
+
+/* ─── Keyframe Animations ───────────────────────────────────── */
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes node-float-a {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  33%       { transform: translateY(-10px) translateX(4px); }
+  66%       { transform: translateY(-4px) translateX(-6px); }
+}
+
+@keyframes node-float-b {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  40%       { transform: translateY(-14px) translateX(-3px); }
+  70%       { transform: translateY(-6px) translateX(5px); }
+}
+
+@keyframes node-float-c {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  25%       { transform: translateY(-8px) translateX(6px); }
+  75%       { transform: translateY(-12px) translateX(-4px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+@keyframes line-draw {
+  from { stroke-dashoffset: 300; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ─── Utility Animation Classes ─────────────────────────────── */
+.animate-fade-slide-up {
+  opacity: 0;
+  animation: fade-slide-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-fade-in {
+  opacity: 0;
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.delay-100 { animation-delay: 0.10s; }
+.delay-150 { animation-delay: 0.15s; }
+.delay-200 { animation-delay: 0.20s; }
+.delay-300 { animation-delay: 0.30s; }
+.delay-400 { animation-delay: 0.40s; }
+.delay-500 { animation-delay: 0.50s; }
+
+.node-a { animation: node-float-a 7s ease-in-out infinite; }
+.node-b { animation: node-float-b 9s ease-in-out infinite; }
+.node-c { animation: node-float-c 8s ease-in-out infinite; }
+
+.line-draw {
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: line-draw 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.glow-pulse { animation: pulse-glow 2.5s ease-in-out infinite; }
+
+/* ─── Form Elements ──────────────────────────────────────────── */
+.ob-input {
+  display: flex;
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  background: var(--ob-surface);
+  border: 1.5px solid var(--ob-border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--ob-text);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  outline: none;
+}
+
+.ob-input::placeholder {
+  color: var(--ob-text-faint);
+}
+
+.ob-input:focus {
+  border-color: var(--ob-amber);
+  box-shadow: 0 0 0 3px var(--ob-amber-glow);
+}
+
+.ob-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ob-input.error {
+  border-color: var(--ob-error);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.10);
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ob-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ob-text-faint); }
+
+/* ─── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
