@@ -19,7 +19,13 @@ function getDb(): DbInstance {
 
 export const db: DbInstance = new Proxy({} as DbInstance, {
   get(_, prop) {
-    return (getDb() as any)[prop]
+    const instance = getDb()
+    const value = (instance as any)[prop]
+    // Bind functions to the real db instance so `this` is correct
+    if (typeof value === 'function') {
+      return value.bind(instance)
+    }
+    return value
   },
 })
 

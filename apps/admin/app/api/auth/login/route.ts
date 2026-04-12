@@ -12,9 +12,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email e senha são obrigatórios.' }, { status: 400 })
     }
 
-    const user = await db.query.adminUsers.findFirst({
-      where: eq(adminUsers.email, email.toLowerCase().trim()),
-    })
+    const rows = await db
+      .select()
+      .from(adminUsers)
+      .where(eq(adminUsers.email, email.toLowerCase().trim()))
+      .limit(1)
+
+    const user = rows[0] ?? null
 
     if (!user) {
       return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 })
