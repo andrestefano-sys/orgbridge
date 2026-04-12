@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@orgbridge/web",
-  "installCommand": "cd ../.. && pnpm install",
-  "outputDirectory": ".next"
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm turbo run build --filter=@orgbridge/web",
+  "outputDirectory": "apps/web/.next"
 }
