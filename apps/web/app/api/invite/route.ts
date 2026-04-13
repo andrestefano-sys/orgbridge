@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@orgbridge/auth'
-import { db, invitations, networkMembers, users, networks } from '@orgbridge/db'
+import { db, invitations, networkMembers, networks } from '@orgbridge/db'
 import { and, eq, gt } from 'drizzle-orm'
 import { createNotification } from '@/lib/notifications'
 
@@ -13,13 +13,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Token inválido.' }, { status: 400 })
     }
 
-    const invitation = await db.query.invitations.findFirst({
-      where: and(
-        eq(invitations.token, token),
-        gt(invitations.expiresAt, new Date()),
-      ),
-      with: { network: true },
-    })
+    const rows = await db
+      .select()
+      .from(invitations)
+      .where(and(eq(invitations.token, token), gt(invitations.expiresAt, new Date())))
+      .limit(1)
+
+    const invitation = rows[0] ?? null
 
     if (!invitation) {
       return NextResponse.json({ error: 'Convite inválido ou expirado.' }, { status: 404 })
@@ -29,16 +29,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Este convite já foi aceito.' }, { status: 409 })
     }
 
+    const networkRows = await db
+      .select({ id: networks.id, name: networks.name, slug: networks.slug })
+      .from(networks)
+      .where(eq(networks.id, invitation.networkId))
+      .limit(1)
+
+    const network = networkRows[0] ?? null
+
     return NextResponse.json({
       invitation: {
         id: invitation.id,
         email: invitation.email,
         role: invitation.role,
-        network: {
-          id: (invitation as any).network?.id,
-          name: (invitation as any).network?.name,
-          slug: (invitation as any).network?.slug,
-        },
+        network,
         expiresAt: invitation.expiresAt,
       },
     })
@@ -62,12 +66,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Token inválido.' }, { status: 400 })
     }
 
-    const invitation = await db.query.invitations.findFirst({
-      where: and(
-        eq(invitations.token, token),
-        gt(invitations.expiresAt, new Date()),
-      ),
-    })
+    const rows = await db
+      .select()
+      .from(invitations)
+      .where(and(eq(invitations.token, token), gt(invitations.expiresAt, new Date())))
+      .limit(1)
+
+    const invitation = rows[0] ?? null
 
     if (!invitation) {
       return NextResponse.json({ error: 'Convite inválido ou expirado.' }, { status: 404 })
@@ -79,31 +84,18 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id
     const userEmail = session.user.email?.toLowerCase()
-
-    // Verify email matches (soft check — warn but don't block)
     const emailMismatch = userEmail && invitation.email !== userEmail
 
     // Check if already a member
-    const existing = await db.query.networkMembers.findFirst({
-      where: and(
-        eq(networkMembers.networkId, invitation.networkId),
-        eq(networkMembers.userId, userId),
-      ),
-    })
+    const existingRows = await db
+      .select()
+      .from(networkMembers)
+      .where(and(eq(networkMembers.networkId, invitation.networkId), eq(networkMembers.userId, userId)))
+      .limit(1)
 
-    if (existing) {
-      // Mark invitation as used anyway
-      await db
-        .update(invitations)
-        .set({ acceptedAt: new Date() })
-        .where(eq(invitations.id, invitation.id))
-
-      return NextResponse.json({
-        ok: true,
-        alreadyMember: true,
-        networkId: invitation.networkId,
-        emailMismatch,
-      })
+    if (existingRows[0]) {
+      await db.update(invitations).set({ acceptedAt: new Date() }).where(eq(invitations.id, invitation.id))
+      return NextResponse.json({ ok: true, alreadyMember: true, networkId: invitation.networkId, emailMismatch })
     }
 
     // Create membership
@@ -117,18 +109,14 @@ export async function POST(req: NextRequest) {
     })
 
     // Mark invitation as accepted
-    await db
-      .update(invitations)
-      .set({ acceptedAt: new Date() })
-      .where(eq(invitations.id, invitation.id))
+    await db.update(invitations).set({ acceptedAt: new Date() }).where(eq(invitations.id, invitation.id))
 
-    // Notify all admins/owners that a new member joined
-    const admins = await db.query.networkMembers.findMany({
-      where: and(
-        eq(networkMembers.networkId, invitation.networkId),
-        eq(networkMembers.status, 'active'),
-      ),
-    })
+    // Notify admins/owners
+    const admins = await db
+      .select()
+      .from(networkMembers)
+      .where(and(eq(networkMembers.networkId, invitation.networkId), eq(networkMembers.status, 'active')))
+
     const joinerName = session.user.name ?? session.user.email ?? 'Novo membro'
     for (const admin of admins) {
       if (['owner', 'admin'].includes(admin.role)) {
@@ -144,12 +132,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      ok: true,
-      networkId: invitation.networkId,
-      role: invitation.role,
-      emailMismatch,
-    })
+    return NextResponse.json({ ok: true, networkId: invitation.networkId, role: invitation.role, emailMismatch })
   } catch (err) {
     console.error('[POST /api/invite]', err)
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
